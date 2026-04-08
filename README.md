@@ -4,7 +4,17 @@ An easily extendible personal accountability system that plugs into health, fitn
 
 Currently integrates with [Habitify](https://habitify.me) via MCP, with Telegram as the primary interface (including voice note support via OpenAI Whisper).
 
-## How it works
+## Architecture
+
+The system runs as a long-lived **Claude Code instance** with the [Telegram channels plugin](https://github.com/anthropics/claude-code-plugins), acting as an always-on assistant you interact with via Telegram (text and voice notes).
+
+Ideal deployment: a remote server (or any always-on machine) running Claude Code inside a **tmux** session so it persists across SSH disconnects.
+
+```
+You (Telegram) <-> Claude Code + Telegram plugin <-> MCP servers (Habitify, etc.)
+```
+
+### Habitify MCP proxy
 
 `habitify_proxy.py` is a stdio MCP server that sits between Claude Code and Habitify's MCP server (`https://mcp.habitify.me/mcp`). It:
 
@@ -14,6 +24,13 @@ Currently integrates with [Habitify](https://habitify.me) via MCP, with Telegram
 - Retries with a fresh token on auth errors
 
 ## Setup
+
+### 0. Prerequisites
+
+- A remote server or always-on machine (Linux recommended)
+- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed and authenticated
+- The [Telegram channels plugin](https://github.com/anthropics/claude-code-plugins) installed and paired with your Telegram bot
+- tmux (to keep the session alive)
 
 ### 1. Install dependencies
 
@@ -37,9 +54,25 @@ This will:
 5. Copy the **full URL** from your browser's address bar and paste it back into the terminal
 6. The script exchanges the code for tokens and saves `HABITIFY_CLIENT_ID` and `HABITIFY_REFRESH_TOKEN` to `.env`
 
-### 3. Restart Claude Code
+### 3. Add API keys
 
-Start Claude Code from the `habit-tracking` directory (or any directory with `.mcp.json` pointing here). The Habitify tools will be available automatically.
+Add your OpenAI API key (for voice note transcription) to `.env`:
+
+```
+OPENAI_API_KEY=sk-...
+```
+
+### 4. Start Claude Code
+
+Start a tmux session and launch Claude Code from the project directory:
+
+```bash
+tmux new -s buddy
+cd /path/to/habit-tracking
+claude
+```
+
+Detach with `Ctrl+B, D`. The session stays alive and keeps listening for Telegram messages.
 
 ## Files
 
