@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "habitify": {
+      "type": "stdio",
+      "command": ".venv/bin/python",
+      "args": ["habitify_proxy.py"]
+    }
+  }
+}
