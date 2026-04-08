@@ -6,7 +6,7 @@ Currently integrates with [Habitify](https://habitify.me) via MCP, with Telegram
 
 ## Architecture
 
-The system runs as a long-lived **Claude Code instance** with the [Telegram channels plugin](https://github.com/anthropics/claude-code-plugins), acting as an always-on assistant you interact with via Telegram (text and voice notes).
+The system runs as a long-lived **Claude Code instance** with the [Telegram channels plugin](https://github.com/anthropics/claude-plugins-official), acting as an always-on assistant you interact with via Telegram (text and voice notes).
 
 Ideal deployment: a remote server (or any always-on machine) running Claude Code inside a **tmux** session so it persists across SSH disconnects.
 
@@ -29,7 +29,7 @@ You (Telegram) <-> Claude Code + Telegram plugin <-> MCP servers (Habitify, etc.
 
 - A remote server or always-on machine (Linux recommended)
 - [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed and authenticated
-- The [Telegram channels plugin](https://github.com/anthropics/claude-code-plugins) installed and paired with your Telegram bot
+- The [Telegram channels plugin](https://github.com/anthropics/claude-plugins-official) installed and paired with your Telegram bot
 - tmux (to keep the session alive)
 
 ### 1. Install dependencies
