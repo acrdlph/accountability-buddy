@@ -1,6 +1,8 @@
-# Habitify MCP for Claude Code
+# Accountability Buddy
 
-Connects Claude Code to [Habitify](https://habitify.me) via MCP with automatic OAuth token refresh.
+An easily extendible personal accountability system that plugs into health, fitness and habit trackers.
+
+Currently integrates with [Habitify](https://habitify.me) via MCP, with Telegram as the primary interface (including voice note support via OpenAI Whisper).
 
 ## How it works
 
@@ -46,7 +48,9 @@ Start Claude Code from the `habit-tracking` directory (or any directory with `.m
 | `habitify_proxy.py` | MCP proxy server (stdio) with auto token refresh |
 | `habitify_oauth_setup.py` | One-time OAuth PKCE setup script |
 | `.mcp.json` | Claude Code MCP server configuration |
-| `.env` | Stores `HABITIFY_CLIENT_ID`, `HABITIFY_REFRESH_TOKEN` (gitignored) |
+| `transcribe.py` | Voice note transcription via OpenAI Whisper API |
+| `CLAUDE.md` | Assistant instructions for habit tracking and input parsing |
+| `.env` | Stores API keys and tokens (gitignored) |
 
 ## Re-authentication
 
@@ -57,3 +61,10 @@ If the refresh token expires or stops working, re-run the OAuth setup:
 ```
 
 This registers a fresh client and token pair. No need to change any other config.
+
+## Roadmap
+
+Upcoming integrations:
+
+- **Hevy** -- workout tracker
+- **Strava** -- running and cycling
