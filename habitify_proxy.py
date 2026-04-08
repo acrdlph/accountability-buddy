@@ -138,6 +138,14 @@ async def handle_list_tools() -> list[types.Tool]:
     return await _ensure_tools()
 
 
+def _is_auth_error(content: list) -> bool:
+    """Check if the response content indicates an authentication error."""
+    for item in content:
+        if hasattr(item, "text") and "authentication required" in item.text.lower():
+            return True
+    return False
+
+
 @server.call_tool()
 async def handle_call_tool(
     name: str, arguments: dict | None
@@ -145,7 +153,7 @@ async def handle_call_tool(
     arguments = arguments or {}
     token = await _ensure_token()
     try:
-        return await _upstream_call_tool(token, name, arguments)
+        result = await _upstream_call_tool(token, name, arguments)
     except Exception as e:
         err_str = str(e).lower()
         if "401" in err_str or "auth" in err_str or "token" in err_str:
@@ -154,6 +162,15 @@ async def handle_call_tool(
             token = await _ensure_token()
             return await _upstream_call_tool(token, name, arguments)
         raise
+
+    # Habitify may return auth errors as successful content rather than exceptions
+    if _is_auth_error(result):
+        logger.warning(f"Auth error in response for {name}, refreshing token and retrying")
+        _invalidate_token()
+        token = await _ensure_token()
+        return await _upstream_call_tool(token, name, arguments)
+
+    return result
 
 
 # --- Entry point ---
