@@ -49,6 +49,25 @@ After a workout is successfully logged in Hevy:
 
 **Showing history**: "What workouts did I do this week?" → use `get-workouts`.
 
+## Running / Cycling (Strava)
+
+Strava is **read-only** via MCP — activities are logged automatically by the user's watch/phone, not by us. Use the Strava tools to answer questions and to cross-check Habitify running habits.
+
+**Common queries:**
+- "What did I run this week?" / "How far did I run this week?" → `get-activities`, filter to run type, sum distance
+- "What are my YTD stats?" → `get-athlete-stats`
+- "What shoes am I using?" → `get-athlete-zones` / `get-athlete` (or the shoes-specific tool)
+- "Did I hit my run goal?" → combine Strava `get-activities` with Habitify `list-habits-by-date`
+
+**Cross-service habit ticking for runs:**
+When the user asks about a run or logs one verbally ("I ran 12k this morning"):
+1. Use Strava as the source of truth if possible — their watch/app will log the run automatically
+2. After confirming the activity in Strava, check Habitify for a matching run habit (e.g. "Run 10k", "Running")
+3. If there's a match AND the Strava activity satisfies the habit's goal → offer to tick it in Habitify (confirm before ticking if unsure about the match)
+4. If not found in Strava yet → the sync from the watch may not be instant; ask the user to wait or just tick Habitify directly on their word
+
+**Important:** Strava MCP can NOT create activities (`activity:write` is not enabled). Never try to log new activities — only read.
+
 ## Voice Notes
 
 - When a Telegram message includes `attachment_file_id`, it may be a voice note
