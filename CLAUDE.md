@@ -25,7 +25,7 @@ This Claude Code instance serves as a personal habit tracking assistant via Tele
 
 ## Workout Tracking (Hevy)
 
-Workouts are always routine-level — the user identifies them by the name of a saved Hevy routine (e.g. "Push Pull", "Legs"). Routine names may change, so always discover them via `get-routines`. Never hardcode routine names in this file.
+Workouts are always routine-level — the user identifies them by the name of a saved Hevy routine (e.g. "Push", "Pull", "Legs"). Routine names may change, so always discover them via `get-routines`. Never hardcode routine names in this file.
 
 **Default flow when the user logs a workout:**
 
