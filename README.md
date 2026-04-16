@@ -81,7 +81,31 @@ nvm alias default 22   # keep system default unchanged if you prefer
 
 The launcher (`hevy_launcher.sh`) picks up Node 24 automatically if it's installed at `~/.nvm/versions/node/v24.15.0/`.
 
-### 4. Start Claude Code
+### 4. Register the MCP servers in `~/.mcp.json`
+
+Claude Code looks for MCP server definitions in `~/.mcp.json` (in your home directory — **not in this repo**, since it's user-level config and references absolute paths specific to your machine).
+
+Create or edit `~/.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "habitify": {
+      "type": "stdio",
+      "command": "/ABSOLUTE/PATH/TO/habit-tracking/.venv/bin/python",
+      "args": ["/ABSOLUTE/PATH/TO/habit-tracking/habitify_proxy.py"]
+    },
+    "hevy": {
+      "type": "stdio",
+      "command": "/ABSOLUTE/PATH/TO/habit-tracking/hevy_launcher.sh"
+    }
+  }
+}
+```
+
+Replace `/ABSOLUTE/PATH/TO/habit-tracking` with the actual path where you cloned this repo. If you don't use Hevy, omit its entry.
+
+### 5. Start Claude Code
 
 Start a tmux session and launch Claude Code from the project directory:
 
@@ -100,7 +124,6 @@ Detach with `Ctrl+B, D`. The session stays alive and keeps listening for Telegra
 | `habitify_proxy.py` | Habitify MCP proxy (stdio) with auto token refresh |
 | `habitify_oauth_setup.py` | One-time Habitify OAuth PKCE setup script |
 | `hevy_launcher.sh` | Wrapper that loads `.env` and runs `hevy-mcp` on Node 24 |
-| `.mcp.json` | Claude Code MCP server configuration |
 | `transcribe.py` | Voice note transcription via OpenAI Whisper API |
 | `CLAUDE.md` | Assistant instructions for habit tracking and input parsing |
 | `.env` | Stores API keys and tokens (gitignored) |
