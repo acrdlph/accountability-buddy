@@ -132,15 +132,19 @@ Replace `/ABSOLUTE/PATH/TO/habit-tracking` with the actual path where you cloned
 
 ### 5. Start Claude Code
 
-Start a tmux session and launch Claude Code from the project directory:
+Start a tmux session and launch Claude Code from the project directory with the Telegram channel attached:
 
 ```bash
 tmux new -s buddy
 cd /path/to/habit-tracking
-claude
+claude --dangerously-skip-permissions --channels plugin:telegram@claude-plugins-official
 ```
 
 Detach with `Ctrl+B, D`. The session stays alive and keeps listening for Telegram messages.
+
+**Why the `--channels` flag is required:** Without it, Claude Code doesn't route inbound Telegram notifications into the session — you'll still be able to *send* replies (because outbound tools work), but user messages never arrive. If Telegram messages stop appearing in your session, this flag is almost always the cause.
+
+The `--dangerously-skip-permissions` flag is what lets the assistant act autonomously on tool calls (sending messages, editing files) without prompting you each time. Drop it if you want interactive approval, but expect the experience to be awkward on a headless server.
 
 ## Files
 
