@@ -29,7 +29,7 @@ Workouts are always routine-level — the user identifies them by the name of a 
 
 **Default flow when the user logs a workout:**
 
-1. Call `get-routines` to list saved routines; fuzzy-match the name the user gave
+1. Call `get-routines` to list saved routines; fuzzy-match the name the user gave. **Note:** `get-routines` is paginated with max `pageSize=10`. Keep paging (`page=1`, `page=2`, ...) until you get a "Page not found" error or a short page. Don't assume page 1 contains everything.
 2. Use the routine's exercises/sets as the baseline
 3. Apply any modifications the user mentioned (different weight, extra set, skipped exercise, added reps, etc.)
 4. Submit via `create-workout`
