@@ -22,7 +22,7 @@ You (Telegram) <-> Claude Code + Telegram plugin <-> MCP servers (Habitify, Hevy
 
 ### 1. Prerequisites
 
-- A remote server or always-on machine (Linux recommended)
+- A Unix-like environment (Linux, macOS, or WSL on Windows) — the launcher scripts are bash, and the deployment assumes tmux. An always-on host (VPS, home server) is ideal so the assistant stays reachable.
 - [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed and authenticated
 - The [Telegram channels plugin](https://github.com/anthropics/claude-plugins-official) installed and paired with your Telegram bot
 - tmux
