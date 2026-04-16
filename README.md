@@ -2,7 +2,10 @@
 
 An easily extendible personal accountability system that plugs into health, fitness and habit trackers.
 
-Currently integrates with [Habitify](https://habitify.me) via MCP, with Telegram as the primary interface (including voice note support via OpenAI Whisper).
+Current integrations:
+- [Habitify](https://habitify.me) — habit tracking (via custom MCP proxy with OAuth refresh)
+- [Hevy](https://hevyapp.com) — workout tracking (via [chrisdoc/hevy-mcp](https://github.com/chrisdoc/hevy-mcp))
+- [Telegram](https://telegram.org) — primary interface, including voice notes transcribed with OpenAI Whisper
 
 ## Architecture
 
@@ -22,6 +25,10 @@ You (Telegram) <-> Claude Code + Telegram plugin <-> MCP servers (Habitify, etc.
 - Discovers all Habitify tools and re-exposes them to Claude Code
 - Opens a fresh SSE connection per tool call (Habitify drops idle connections after ~30s)
 - Retries with a fresh token on auth errors
+
+### Hevy MCP launcher
+
+`hevy_launcher.sh` is a thin wrapper that loads the Hevy API key from `.env` and runs [chrisdoc/hevy-mcp](https://github.com/chrisdoc/hevy-mcp) via `npx`. The hevy-mcp package requires Node 24+, so the launcher prepends a Node 24 install (via nvm) to `PATH` without changing the system default. Requires a Hevy PRO subscription for API access.
 
 ## Setup
 
@@ -56,11 +63,23 @@ This will:
 
 ### 3. Add API keys
 
-Add your OpenAI API key (for voice note transcription) to `.env`:
+Add these to `.env`:
 
 ```
-OPENAI_API_KEY=sk-...
+OPENAI_API_KEY=sk-...     # for voice note transcription
+HEVY_API_KEY=<uuid>       # get at https://hevy.com/settings?developer (requires Hevy PRO)
 ```
+
+### 3b. Install Node 24 (for Hevy MCP)
+
+The Hevy MCP server requires Node 24+. Install it via nvm:
+
+```bash
+nvm install 24
+nvm alias default 22   # keep system default unchanged if you prefer
+```
+
+The launcher (`hevy_launcher.sh`) picks up Node 24 automatically if it's installed at `~/.nvm/versions/node/v24.15.0/`.
 
 ### 4. Start Claude Code
 
@@ -78,8 +97,9 @@ Detach with `Ctrl+B, D`. The session stays alive and keeps listening for Telegra
 
 | File | Purpose |
 |---|---|
-| `habitify_proxy.py` | MCP proxy server (stdio) with auto token refresh |
-| `habitify_oauth_setup.py` | One-time OAuth PKCE setup script |
+| `habitify_proxy.py` | Habitify MCP proxy (stdio) with auto token refresh |
+| `habitify_oauth_setup.py` | One-time Habitify OAuth PKCE setup script |
+| `hevy_launcher.sh` | Wrapper that loads `.env` and runs `hevy-mcp` on Node 24 |
 | `.mcp.json` | Claude Code MCP server configuration |
 | `transcribe.py` | Voice note transcription via OpenAI Whisper API |
 | `CLAUDE.md` | Assistant instructions for habit tracking and input parsing |
@@ -99,5 +119,4 @@ This registers a fresh client and token pair. No need to change any other config
 
 Upcoming integrations:
 
-- **Hevy** -- workout tracker
 - **Strava** -- running and cycling
