@@ -140,7 +140,7 @@ cd /path/to/habit-tracking
 claude --dangerously-skip-permissions --channels plugin:telegram@claude-plugins-official
 ```
 
-Detach with `Ctrl+B, D`. The session stays alive and keeps listening for Telegram messages.
+To leave the assistant running, simply close the terminal window — the tmux session keeps going in the background (the usual `Ctrl+B, D` detach doesn't always punch through Claude Code's TUI). Reattach later with `tmux attach -t buddy`.
 
 **The `--channels` flag is required.** Without it, Claude Code doesn't route inbound Telegram notifications into the session — you'll still be able to *send* replies, but user messages never arrive. If Telegram messages stop appearing in your session, this flag is almost always the cause.
 
