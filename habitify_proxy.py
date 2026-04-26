@@ -1,7 +1,8 @@
 """Habitify MCP proxy server with automatic OAuth token refresh.
 
-Sits between Claude Code (stdio transport) and the Habitify MCP server (SSE),
-transparently managing Bearer token lifecycle using a stored refresh token.
+Sits between Claude Code (stdio transport) and the Habitify MCP server
+(Streamable HTTP), transparently managing Bearer token lifecycle using
+a stored refresh token.
 
 Setup:
     1. Run the OAuth setup: python3 habitify_oauth_setup.py
@@ -20,7 +21,7 @@ import anyio
 import httpx
 from dotenv import load_dotenv
 from mcp import ClientSession, types
-from mcp.client.sse import sse_client
+from mcp.client.streamable_http import streamablehttp_client
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
 
@@ -83,13 +84,13 @@ async def _ensure_token() -> str:
 
 
 # --- Upstream MCP helpers ---
-# Each call opens a fresh SSE connection because Habitify drops idle
-# connections after ~30 seconds.
+# Each call opens a fresh Streamable HTTP connection because Habitify
+# drops idle connections after ~30 seconds.
 
 
 async def _upstream_list_tools(token: str) -> list[types.Tool]:
     headers = {"Authorization": f"Bearer {token}"}
-    async with sse_client(HABITIFY_MCP_URL, headers=headers) as (rs, ws):
+    async with streamablehttp_client(HABITIFY_MCP_URL, headers=headers) as (rs, ws, _):
         async with ClientSession(rs, ws) as session:
             await session.initialize()
             result = await session.list_tools()
@@ -100,7 +101,7 @@ async def _upstream_call_tool(
     token: str, name: str, arguments: dict
 ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
     headers = {"Authorization": f"Bearer {token}"}
-    async with sse_client(HABITIFY_MCP_URL, headers=headers) as (rs, ws):
+    async with streamablehttp_client(HABITIFY_MCP_URL, headers=headers) as (rs, ws, _):
         async with ClientSession(rs, ws) as session:
             await session.initialize()
             result = await session.call_tool(name, arguments)
