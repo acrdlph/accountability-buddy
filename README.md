@@ -21,11 +21,23 @@ An easily extendible personal accountability system that plugs into health, fitn
 
 The system runs as a long-lived **Claude Code instance** with the [Telegram channels plugin](https://github.com/anthropics/claude-plugins-official), acting as an always-on assistant you interact with via Telegram (text and voice notes).
 
-Ideal deployment: a remote server (or any always-on machine) running Claude Code inside a **tmux** session so it persists across SSH disconnects.
-
 ```
 You (Telegram) <-> Claude Code + Telegram plugin <-> MCP servers (Habitify, Hevy, Strava)
 ```
+
+## Deployment
+
+This is **not** a bot you fire up on your laptop when you want it. To be useful, the assistant has to be reachable from Telegram *whenever you message it* — including when your computer is asleep or you're away from it. That means it should run on an **always-on host**.
+
+**Recommended: a remote, always-on machine.**
+
+- A small cloud VPS (e.g. DigitalOcean, Hetzner, Fly.io, an EC2 instance) or a home server / Raspberry Pi that stays powered on.
+- The cheapest tier is plenty — this is a single Claude Code process talking to a few APIs, not a heavy workload.
+- Run Claude Code inside a **tmux** session so it survives SSH disconnects and keeps running after you log out. You SSH in once to start it, then leave it running indefinitely; reattach only when you want to check on it or change config.
+
+**Why not just your own computer?** You can run it locally to try it out, but the moment your laptop sleeps, loses network, or shuts down, the assistant goes offline and your Telegram messages won't be answered until it's back. An always-on host avoids that entirely.
+
+The setup steps below work the same whether you're on a VPS or a local machine — the only difference is *where* you run them. If you're deploying for real, do the setup on your always-on host (over SSH). The [Launch Claude Code](#8-launch-claude-code) step covers running it under tmux so it persists.
 
 ## Setup
 
@@ -199,4 +211,6 @@ Your nutrition logs are similarly private: meal logs live in `nutrition/` (gitig
 
 ## Roadmap
 
-No active roadmap items — feel free to open issues or PRs for new integrations.
+- **Switch Strava to the official MCP server.** Strava recently released a first-party MCP server, so we should migrate off the community [r-huijts/strava-mcp](https://github.com/r-huijts/strava-mcp) integration once the official one is stable.
+
+Feel free to open issues or PRs for new integrations.
