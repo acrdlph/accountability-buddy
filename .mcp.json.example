@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "habitify": {
+      "type": "stdio",
+      "command": "/ABSOLUTE/PATH/TO/habit-tracking/.venv/bin/python",
+      "args": ["/ABSOLUTE/PATH/TO/habit-tracking/habitify_proxy.py"]
+    },
+    "hevy": {
+      "type": "stdio",
+      "command": "/ABSOLUTE/PATH/TO/habit-tracking/hevy_launcher.sh"
+    },
+    "strava": {
+      "type": "stdio",
+      "command": "/ABSOLUTE/PATH/TO/habit-tracking/strava_launcher.sh"
+    }
+  }
+}
