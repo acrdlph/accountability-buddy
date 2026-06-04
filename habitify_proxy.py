@@ -25,6 +25,10 @@ from mcp.client.streamable_http import streamablehttp_client
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
 
+MAX_RETRIES = 3
+UPSTREAM_TIMEOUT = 15  # seconds per HTTP request to Habitify
+SSE_READ_TIMEOUT = 30  # seconds to wait for SSE responses
+
 # Load .env from same directory as this script
 _script_dir = Path(__file__).resolve().parent
 load_dotenv(_script_dir / ".env")
@@ -90,7 +94,12 @@ async def _ensure_token() -> str:
 
 async def _upstream_list_tools(token: str) -> list[types.Tool]:
     headers = {"Authorization": f"Bearer {token}"}
-    async with streamablehttp_client(HABITIFY_MCP_URL, headers=headers) as (rs, ws, _):
+    async with streamablehttp_client(
+        HABITIFY_MCP_URL,
+        headers=headers,
+        timeout=UPSTREAM_TIMEOUT,
+        sse_read_timeout=SSE_READ_TIMEOUT,
+    ) as (rs, ws, _):
         async with ClientSession(rs, ws) as session:
             await session.initialize()
             result = await session.list_tools()
@@ -101,7 +110,12 @@ async def _upstream_call_tool(
     token: str, name: str, arguments: dict
 ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
     headers = {"Authorization": f"Bearer {token}"}
-    async with streamablehttp_client(HABITIFY_MCP_URL, headers=headers) as (rs, ws, _):
+    async with streamablehttp_client(
+        HABITIFY_MCP_URL,
+        headers=headers,
+        timeout=UPSTREAM_TIMEOUT,
+        sse_read_timeout=SSE_READ_TIMEOUT,
+    ) as (rs, ws, _):
         async with ClientSession(rs, ws) as session:
             await session.initialize()
             result = await session.call_tool(name, arguments)
@@ -121,17 +135,27 @@ async def _ensure_tools() -> list[types.Tool]:
     if _cached_tools is not None:
         return _cached_tools
 
-    token = await _ensure_token()
-    try:
-        _cached_tools = await _upstream_list_tools(token)
-    except Exception:
-        # Token may be stale, retry once
-        _invalidate_token()
+    last_error: BaseException | None = None
+    for attempt in range(1, MAX_RETRIES + 1):
         token = await _ensure_token()
-        _cached_tools = await _upstream_list_tools(token)
+        try:
+            _cached_tools = await _upstream_list_tools(token)
+            logger.info(f"Discovered {len(_cached_tools)} upstream tools")
+            return _cached_tools
+        except BaseExceptionGroup as eg:
+            last_error = eg
+            logger.warning(f"TaskGroup error listing tools (attempt {attempt}): {eg}")
+            _invalidate_token()
+            if attempt < MAX_RETRIES:
+                await anyio.sleep(1 * attempt)
+        except Exception as e:
+            last_error = e
+            logger.warning(f"Error listing tools (attempt {attempt}): {e}")
+            _invalidate_token()
+            if attempt < MAX_RETRIES:
+                await anyio.sleep(1 * attempt)
 
-    logger.info(f"Discovered {len(_cached_tools)} upstream tools")
-    return _cached_tools
+    raise RuntimeError(f"Failed to list tools after {MAX_RETRIES} attempts: {last_error}")
 
 
 @server.list_tools()
@@ -147,31 +171,65 @@ def _is_auth_error(content: list) -> bool:
     return False
 
 
+async def _call_with_retries(
+    name: str, arguments: dict
+) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
+    """Call upstream tool with retry logic for transient failures."""
+    last_error: BaseException | None = None
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        token = await _ensure_token()
+        try:
+            result = await _upstream_call_tool(token, name, arguments)
+
+            # Habitify may return auth errors as successful content
+            if _is_auth_error(result):
+                logger.warning(f"Auth error in response for {name} (attempt {attempt})")
+                _invalidate_token()
+                continue
+
+            return result
+
+        except BaseExceptionGroup as eg:
+            # TaskGroup errors from streamablehttp_client — transient connection issues
+            last_error = eg
+            logger.warning(
+                f"TaskGroup error on {name} (attempt {attempt}/{MAX_RETRIES}): {eg}"
+            )
+            _invalidate_token()
+            if attempt < MAX_RETRIES:
+                await anyio.sleep(1 * attempt)
+
+        except Exception as e:
+            last_error = e
+            err_str = str(e).lower()
+            if "401" in err_str or "auth" in err_str or "token" in err_str:
+                logger.warning(f"Auth error on {name} (attempt {attempt})")
+                _invalidate_token()
+                if attempt < MAX_RETRIES:
+                    continue
+            else:
+                logger.warning(
+                    f"Error on {name} (attempt {attempt}/{MAX_RETRIES}): {e}"
+                )
+                if attempt < MAX_RETRIES:
+                    await anyio.sleep(1 * attempt)
+                else:
+                    break
+
+    # All retries exhausted — return error as content instead of raising,
+    # which would kill the stdio connection
+    error_msg = f"Habitify call failed after {MAX_RETRIES} attempts: {last_error}"
+    logger.error(error_msg)
+    return [types.TextContent(type="text", text=error_msg)]
+
+
 @server.call_tool()
 async def handle_call_tool(
     name: str, arguments: dict | None
 ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
     arguments = arguments or {}
-    token = await _ensure_token()
-    try:
-        result = await _upstream_call_tool(token, name, arguments)
-    except Exception as e:
-        err_str = str(e).lower()
-        if "401" in err_str or "auth" in err_str or "token" in err_str:
-            logger.warning(f"Auth error on {name}, refreshing token and retrying")
-            _invalidate_token()
-            token = await _ensure_token()
-            return await _upstream_call_tool(token, name, arguments)
-        raise
-
-    # Habitify may return auth errors as successful content rather than exceptions
-    if _is_auth_error(result):
-        logger.warning(f"Auth error in response for {name}, refreshing token and retrying")
-        _invalidate_token()
-        token = await _ensure_token()
-        return await _upstream_call_tool(token, name, arguments)
-
-    return result
+    return await _call_with_retries(name, arguments)
 
 
 # --- Entry point ---
