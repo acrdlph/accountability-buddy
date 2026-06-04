@@ -1,6 +1,15 @@
 # Accountability Buddy
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Built with Claude Code](https://img.shields.io/badge/Built%20with-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
+
 An easily extendible personal accountability system that plugs into health, fitness and habit trackers.
+
+<p align="center">
+  <img src="logos/preview.png" alt="Accountability Buddy data flow: Telegram and Whisper feed a central Claude Code instance that talks to Habitify, Hevy, and Strava" width="320">
+</p>
+
+<p align="center"><em>A Telegram message (or voice note) flows into Claude Code, which routes it to the right tracker. <a href="logos/flow_animation.html">Animated version</a>.</em></p>
 
 **Current integrations:**
 - [Habitify](https://habitify.me) — habit tracking (via custom MCP proxy with OAuth refresh)
@@ -146,6 +155,23 @@ To leave the assistant running, simply close the terminal window — the tmux se
 
 The `--dangerously-skip-permissions` flag lets the assistant act autonomously on tool calls. Drop it if you want interactive approval, but expect the experience to be awkward on a headless server.
 
+## Customize for yourself
+
+The assistant's behavior is split across two files:
+
+- **`CLAUDE.md`** (committed) — the *generic* rules: how each integration works, how to interpret messages, response style. You usually don't need to touch this.
+- **`CLAUDE.local.md`** (gitignored) — *your* personal layer: your habit name mappings, workout rotation, diet preferences. Claude Code auto-loads it alongside `CLAUDE.md`, and silently does nothing if it's absent.
+
+To set up your personal layer, copy the worked example and edit it:
+
+```bash
+cp CLAUDE.local.md.example CLAUDE.local.md
+```
+
+`CLAUDE.local.md.example` contains the maintainer's real config as a starting point. Because `CLAUDE.local.md` is gitignored, your personal habits and preferences never get committed.
+
+Your nutrition logs are similarly private: meal logs live in `nutrition/` (gitignored). See [`docs/nutrition-example.md`](docs/nutrition-example.md) for the file format.
+
 ## Files
 
 | File | Purpose |
@@ -156,9 +182,13 @@ The `--dangerously-skip-permissions` flag lets the assistant act autonomously on
 | `strava_launcher.sh` | Wrapper that loads `.env` and runs `strava-mcp` via `npx` |
 | `strava_oauth_setup.py` | One-time Strava OAuth flow (obtains access + refresh tokens) |
 | `transcribe.py` | Voice note transcription via OpenAI Whisper |
-| `CLAUDE.md` | Assistant behavior rules (input parsing, cross-service logic, response style) |
+| `CLAUDE.md` | Generic assistant behavior rules (input parsing, cross-service logic, response style) |
+| `CLAUDE.local.md.example` | Worked example of the personal layer (habits, rotation, diet) — copy to `CLAUDE.local.md` |
 | `.env` | API keys and tokens (gitignored) |
 | `.env.example` | Template of the env vars required by the integrations |
+| `.mcp.json.example` | Template for `~/.mcp.json` MCP server registration |
+| `logos/` | Architecture visualization (`flow_animation.html`, `preview.png`, render scripts) |
+| `docs/nutrition-example.md` | Nutrition log file-format reference |
 
 ## Troubleshooting
 
