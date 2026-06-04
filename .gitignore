@@ -1,4 +1,13 @@
-node_modules/
+# Secrets & machine-specific config
 .env
+.mcp.json
+
+# Personal, non-shared instructions and data
+CLAUDE.local.md
+nutrition/
+
+# Dependencies & build artifacts
+node_modules/
 .venv/
 __pycache__/
+logos/frames/

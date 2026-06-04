@@ -1,0 +1,39 @@
+# Personal Configuration (example)
+
+Copy this file to `CLAUDE.local.md` and edit it with your own habits, workout rotation, and
+preferences:
+
+```bash
+cp CLAUDE.local.md.example CLAUDE.local.md
+```
+
+`CLAUDE.local.md` is gitignored and auto-loaded by Claude Code alongside `CLAUDE.md`, so
+your personal setup stays private and local while the generic rules in `CLAUDE.md` stay
+shared. If `CLAUDE.local.md` is absent, nothing breaks — you just lose the personalization.
+
+The sections below are the maintainer's real configuration, kept as a worked example.
+
+## My habits
+
+- Casual name → actual habit mappings: "lifting" → Weights Workout, "ran" → Run 10k,
+  "meditated" → Complete Meditation.
+- Multi-rep habits: meditation has a daily goal of 2. "Log a meditation" = 1 rep (not the
+  whole habit).
+- "Full meditation" / "complete meditation" = one proper (not short) session — "full" refers
+  to the quality of the session, NOT the quantity. Log as 1 rep unless I explicitly say I did
+  both (e.g. "did both meditations").
+- When a workout includes pull-ups (part of a Pull/Back session), also tick my pull-up habit.
+
+## My workout rotation
+
+- Strict order: **Pull → Push → Leg → Pull → Push → Leg**. After a Pull the next is ALWAYS
+  Push; after Push ALWAYS Leg; after Leg ALWAYS Pull. Rest days don't reset the order — just
+  resume where I left off. Check my last workout type and give the next in sequence.
+- Back-day variant: an alternate Pull workout with more isolation / cable work. It counts as
+  the Pull slot in the rotation.
+
+## My diet & food preferences
+
+- Vegetarian. No egg, fish, onion, garlic, mushroom, or leek.
+- Be conservative with protein/calorie estimates when logging nutrition.
+- Apply these when logging meals or suggesting food.
