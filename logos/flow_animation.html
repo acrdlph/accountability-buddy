@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Habit Tracking Flow</title>
+<style>
+  :root {
+    --claude:  #e8895c;
+    --tg:      #29a9ea;
+    --whisper: #19c37d;
+    --habit:   #5b86ff;
+    --routines:#5b8def;
+    --history: #b08bfa;
+    --create:  #34d399;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 1080px; height: 1920px;
+    background: #06060a; overflow: hidden;
+    font-family: -apple-system, 'SF Pro Display', 'Segoe UI', Inter, sans-serif;
+  }
+
+  .stage {
+    position: relative; width: 1080px; height: 1920px; overflow: hidden;
+    background:
+      radial-gradient(1300px 1300px at 56% 50%, rgba(232,137,92,0.13), transparent 58%),
+      radial-gradient(900px 1500px at 50% 50%, #0d0d16 0%, #06060a 72%);
+  }
+
+  .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 54px 54px;
+    mask-image: radial-gradient(circle at 55% 50%, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(circle at 55% 50%, black 30%, transparent 80%);
+  }
+
+  /* ===== wires (present from start) ===== */
+  svg.wires { position: absolute; inset: 0; width: 1080px; height: 1920px; z-index: 1; }
+  .wire {
+    fill: none; stroke: rgba(255,255,255,0.14); stroke-width: 2.5; stroke-linecap: round;
+  }
+  .pulse {
+    fill: none; stroke-width: 6; stroke-linecap: round;
+    stroke-dasharray: 18 100; stroke-dashoffset: 18;
+    opacity: 0; filter: url(#glow);
+  }
+
+  /* ===== nodes (present from start) ===== */
+  .node {
+    position: absolute; transform: translate(-50%,-50%); z-index: 3;
+  }
+  .chip {
+    background: #fff; border-radius: 26px;
+    box-shadow: 0 14px 60px rgba(0,0,0,0.6), 0 0 0 1.5px rgba(255,255,255,0.10),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .chip img { display: block; }
+
+  #telegram { left: 922px; top: 960px; }
+  #telegram .chip { padding: 18px 26px; }
+  #telegram img { height: 100px; }
+
+  #claude { left: 606px; top: 960px; }
+  #claude .chip { padding: 30px 38px; }
+  #claude img { height: 54px; }
+
+  #whisper { left: 606px; top: 352px; }
+  #whisper .chip { padding: 22px 36px; }
+  #whisper img { height: 150px; }
+
+  #habitify { left: 606px; top: 1568px; }
+  #habitify .chip { padding: 28px 38px; }
+  #habitify img { height: 56px; }
+
+  #hevy { left: 330px; top: 960px; }
+  #hevy .chip {
+    padding: 0; width: 138px; height: 138px; border-radius: 30px; overflow: hidden;
+    background: #000;
+    box-shadow: 0 14px 60px rgba(0,0,0,0.65), 0 0 0 1.5px rgba(255,255,255,0.14), 0 0 34px rgba(255,255,255,0.07);
+  }
+  #hevy img { width: 138px; height: 138px; object-fit: cover; }
+
+  /* ===== data cards (present from start) ===== */
+  .card {
+    position: absolute; width: 200px; transform: translate(-50%,-50%); z-index: 3;
+    border-radius: 20px; padding: 16px 16px 18px;
+    background: linear-gradient(180deg, rgba(32,32,44,0.96), rgba(20,20,30,0.96));
+    box-shadow: 0 16px 56px rgba(0,0,0,0.55), 0 0 0 1.5px rgba(255,255,255,0.08);
+  }
+  .card.db::before, .card.db::after {
+    content: ''; position: absolute; inset: 0; border-radius: 20px;
+    background: rgba(255,255,255,0.045); box-shadow: 0 0 0 1px rgba(255,255,255,0.05); z-index: -1;
+  }
+  .card.db::before { transform: translate(8px,10px); opacity: 0.55; }
+  .card.db::after  { transform: translate(16px,20px); opacity: 0.3; }
+
+  .card-head { display: flex; align-items: center; gap: 9px; margin-bottom: 13px; }
+  .card-ico { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; flex: 0 0 auto; }
+  .card-ico svg { width: 15px; height: 15px; display: block; }
+  .card-title { color: #fff; font-size: 17px; font-weight: 650; letter-spacing: 0.2px; white-space: nowrap; }
+  .row { height: 10px; border-radius: 5px; background: rgba(255,255,255,0.15); margin-bottom: 9px; }
+  .row:last-child { margin-bottom: 0; }
+
+  #routines { left: 150px; top: 658px; }
+  #history  { left: 150px; top: 960px; }
+  #newwork  { left: 150px; top: 1300px; }
+
+  #routines .card-ico { background: rgba(91,141,239,0.20); color: var(--routines); }
+  #history  .card-ico { background: rgba(176,139,250,0.20); color: var(--history); }
+  #newwork  .card-ico { background: rgba(52,211,153,0.22); color: var(--create); }
+
+  /* new workout rows draw in (the "added" movement) */
+  #newwork .row { background: rgba(52,211,153,0.22); transform-origin: left; transform: scaleX(0); }
+
+  /* ===== check badge + ring (shared) ===== */
+  .check-badge {
+    position: absolute; top: -16px; right: -16px; width: 46px; height: 46px; border-radius: 50%;
+    background: var(--create); display: grid; place-items: center;
+    box-shadow: 0 8px 26px rgba(52,211,153,0.55); transform: scale(0); z-index: 5;
+  }
+  .check-badge svg { width: 26px; height: 26px; display: block; }
+  .check-ring {
+    position: absolute; left: 50%; top: 50%; width: 100%; height: 100%;
+    border-radius: 20px; border: 2.5px solid var(--create);
+    transform: translate(-50%,-50%) scale(1); opacity: 0; z-index: 2;
+  }
+  #habitify .check-ring { border-radius: 26px; }
+
+  /* ===== whisper transcription spinner ===== */
+  .spin-wrap { position: absolute; top: -20px; right: -20px; width: 50px; height: 50px; opacity: 0; z-index: 5; }
+  .spinner {
+    width: 50px; height: 50px; border-radius: 50%;
+    border: 5px solid rgba(25,195,125,0.22);
+    border-top-color: var(--whisper); border-right-color: var(--whisper);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+
+  /* ===== keyframes ===== */
+  @keyframes stream {
+    0%   { opacity: 0; stroke-dashoffset: 18; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { opacity: 0; stroke-dashoffset: -100; }
+  }
+  @keyframes rowdraw { to { transform: scaleX(1); } }
+  @keyframes badgepop {
+    0% { transform: scale(0) rotate(-100deg); }
+    70%{ transform: scale(1.22) rotate(8deg); }
+    100%{ transform: scale(1) rotate(0); }
+  }
+  @keyframes ringout {
+    0%   { opacity: 0.9; transform: translate(-50%,-50%) scale(0.92); }
+    100% { opacity: 0; transform: translate(-50%,-50%) scale(1.55); }
+  }
+  @keyframes claudepulse {
+    0%,100% { box-shadow: 0 14px 60px rgba(0,0,0,0.6), 0 0 0 1.5px rgba(232,137,92,0.5), 0 0 55px rgba(232,137,92,0.35); }
+    50%     { box-shadow: 0 14px 60px rgba(0,0,0,0.6), 0 0 0 1.5px rgba(232,137,92,0.8), 0 0 110px rgba(232,137,92,0.62); }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spinWork {
+    0%   { opacity: 0; transform: scale(0.5); }
+    16%  { opacity: 1; transform: scale(1); }
+    82%  { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.85); }
+  }
+
+  /* ===== timeline (~5.4s, movements only) ===== */
+  #claude .chip { animation: claudepulse 2.8s ease-in-out 0.3s infinite; }
+
+  /* 1) user speaks in from Telegram */
+  .pulse.p-tg   { stroke: var(--tg);      animation: stream 0.9s linear 0.2s forwards; }
+  /* 2) audio up to Whisper -> 3) spinner -> 4) text back to Claude */
+  .pulse.p-whup { stroke: var(--whisper); animation: stream 0.65s linear 1.0s forwards; }
+  .pulse.p-whdn { stroke: #d7dee8;        animation: stream 0.65s linear 2.35s forwards; }
+  /* 5) request out to Hevy, reads stream back, new workout written */
+  .pulse.p-hub  { stroke: var(--routines);animation: stream 0.55s linear 2.8s forwards; }
+  .pulse.p-rt   { stroke: var(--routines);animation: stream 0.8s linear 2.95s forwards; }
+  .pulse.p-hs   { stroke: var(--history); animation: stream 0.75s linear 3.05s forwards; }
+  .pulse.p-nw   { stroke: var(--create);  animation: stream 0.8s linear 3.45s forwards; }
+  /* 6) tick down to Habitify */
+  .pulse.p-hb   { stroke: var(--habit);   animation: stream 0.8s linear 3.9s forwards; }
+
+  /* spinner appears as the up-flash reaches Whisper, runs through transcription */
+  .spin-wrap { animation: spinWork 0.95s ease 1.6s forwards; }
+  .spinner   { animation: spin 0.8s linear 1.6s infinite; }
+
+  #newwork .row.r1 { animation: rowdraw 0.34s ease-out 3.9s forwards; }
+  #newwork .row.r2 { animation: rowdraw 0.34s ease-out 4.02s forwards; }
+  #newwork .check-badge { animation: badgepop 0.55s cubic-bezier(.2,.9,.3,1.4) 4.1s forwards; }
+  #newwork .check-ring  { animation: ringout 0.8s ease-out 4.1s forwards; }
+
+  #habitify .check-badge { animation: badgepop 0.55s cubic-bezier(.2,.9,.3,1.4) 4.55s forwards; }
+  #habitify .check-ring  { animation: ringout 0.8s ease-out 4.55s forwards; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="grid"></div>
+
+  <svg class="wires" viewBox="0 0 1080 1920">
+    <defs>
+      <filter id="glow" filterUnits="userSpaceOnUse" x="0" y="0" width="1080" height="1920">
+        <feGaussianBlur stdDeviation="5" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <path class="wire w-tg"  d="M 922 960 L 606 960"/>
+    <path class="wire w-wh"  d="M 606 960 L 606 352"/>
+    <path class="wire w-hub" d="M 606 960 L 330 960"/>
+    <path class="wire w-rt"  d="M 330 960 C 250 870, 205 745, 150 658"/>
+    <path class="wire w-hs"  d="M 330 960 L 150 960"/>
+    <path class="wire w-nw"  d="M 330 960 C 250 1075, 205 1205, 150 1300"/>
+    <path class="wire w-hb"  d="M 606 960 L 606 1568"/>
+
+    <path class="pulse p-tg"   pathLength="100" d="M 922 960 L 606 960"/>
+    <path class="pulse p-whup" pathLength="100" d="M 606 960 L 606 352"/>
+    <path class="pulse p-whdn" pathLength="100" d="M 606 352 L 606 960"/>
+    <path class="pulse p-hub"  pathLength="100" d="M 606 960 L 330 960"/>
+    <path class="pulse p-rt"   pathLength="100" d="M 150 658 C 205 745, 250 870, 330 960 L 606 960"/>
+    <path class="pulse p-hs"   pathLength="100" d="M 150 960 L 606 960"/>
+    <path class="pulse p-nw"   pathLength="100" d="M 606 960 L 330 960 C 250 1075, 205 1205, 150 1300"/>
+    <path class="pulse p-hb"   pathLength="100" d="M 606 960 L 606 1568"/>
+  </svg>
+
+  <!-- nodes -->
+  <div class="node" id="telegram"><div class="chip"><img src="telegram_text.png" alt="Telegram"></div></div>
+  <div class="node" id="claude"><div class="chip"><img src="claude_text.png" alt="Claude"></div></div>
+  <div class="node" id="whisper">
+    <div class="chip"><img src="whisper.png" alt="Whisper"></div>
+    <div class="spin-wrap"><div class="spinner"></div></div>
+  </div>
+  <div class="node" id="hevy"><div class="chip"><img src="hevy_text.jpg" alt="Hevy"></div></div>
+  <div class="node" id="habitify">
+    <div class="chip"><img src="habitify_text.png" alt="Habitify"></div>
+    <div class="check-ring"></div>
+    <div class="check-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#063" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4 10-11"/></svg></div>
+  </div>
+
+  <!-- data cards -->
+  <div class="card db" id="routines">
+    <div class="card-head">
+      <span class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span>
+      <span class="card-title">Routines</span>
+    </div>
+    <div class="row" style="width:90%"></div>
+    <div class="row" style="width:70%"></div>
+    <div class="row" style="width:82%"></div>
+  </div>
+
+  <div class="card db" id="history">
+    <div class="card-head">
+      <span class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/></svg></span>
+      <span class="card-title">Workout History</span>
+    </div>
+    <div class="row" style="width:78%"></div>
+    <div class="row" style="width:92%"></div>
+    <div class="row" style="width:64%"></div>
+  </div>
+
+  <div class="card" id="newwork">
+    <div class="check-ring"></div>
+    <div class="check-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#063" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4 10-11"/></svg></div>
+    <div class="card-head">
+      <span class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+      <span class="card-title">New Workout</span>
+    </div>
+    <div class="row r1" style="width:88%"></div>
+    <div class="row r2" style="width:72%"></div>
+  </div>
+</div>
+
+<script>
+  if (!location.search.includes('capture')) {
+    const host = document.body;
+    const stage = document.querySelector('.stage');
+    const html = stage.outerHTML;
+    setInterval(() => {
+      const cur = document.querySelector('.stage');
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      host.replaceChild(tmp.firstChild, cur);
+    }, 5600);
+  }
+</script>
+</body>
+</html>
