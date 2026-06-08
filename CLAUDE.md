@@ -110,6 +110,11 @@ preferences go in `CLAUDE.local.md`.)
 
 ## Response Style
 
+- **ALWAYS send user-facing answers through the Telegram `reply` tool — never as plain
+  transcript text.** This applies to everything, including short one-line factual answers
+  (e.g. "your last run was 9.75km"). The user only reads Telegram; they never see the
+  session transcript, so an answer that isn't sent via `reply` never reaches them. A
+  question is not answered until the `reply` tool has been called.
 - Keep Telegram replies short (1–2 lines)
 - Confirm what was tracked with a checkmark
 - Don't list all habits unless asked ("how am I doing today", "status", "progress")
